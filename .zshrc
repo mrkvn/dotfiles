@@ -44,8 +44,8 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Uncomment the following line to disable colors in ls.
 # DISABLE_LS_COLORS="true"
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+# Disable auto-setting terminal title (prevents oh-my-zsh from renaming tmux windows).
+DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
 # ENABLE_CORRECTION="true"
@@ -79,11 +79,29 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
 	zsh-autosuggestions
+	zsh-completions
 	conda-zsh-completion
 	docker
+	zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
+
+# ── Catppuccin-themed fzf ──
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#313244,bg:#000000,spinner:#f5e0dc,hl:#f38ba8 \
+--color=fg:#cdd6f4,header:#ff5f00,info:#cba6f7,pointer:#f5e0dc \
+--color=fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
+--color=marker:#b4befe,selected-bg:#45475a \
+--multi"
+
+# ── bat theme ──
+export BAT_THEME="Catppuccin Mocha"
+
+# ── Modern ls/tree with eza ──
+alias ls="eza --icons --group-directories-first"
+alias ll="eza -la --icons --group-directories-first"
+alias lt="eza --tree --icons --level=2"
 
 # User configuration
 
