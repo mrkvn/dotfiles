@@ -2,3 +2,4 @@ background = #0d0d0d
 font-size = 11.5
 window-padding-x = 50
 window-padding-y = 10,0
+keybind = super+shift+u=copy_url_to_clipboard
