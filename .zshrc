@@ -80,7 +80,6 @@ DISABLE_AUTO_TITLE="true"
 plugins=(
 	zsh-autosuggestions
 	zsh-completions
-	conda-zsh-completion
 	docker
 	zsh-syntax-highlighting
 )
@@ -162,7 +161,6 @@ alias vim=nvim
 alias v=nvim
 alias nrd="npm run dev"
 alias nrb="npm run build"
-alias ca="conda activate"
 alias dnsflash="sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"
 alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 gcm() {
@@ -211,7 +209,6 @@ export PATH="$HOME/.local/scripts:$PATH"
 export PATH="$PATH:/Users/mrkvn/.opt/flutter/bin"
 
 
-#export MOJO_PYTHON_LIBRARY="$(conda info --base)/envs/mojo/lib/libpython3.11.dylib"
 #export MOJO_PYTHON_LIBRARY="/Users/mrkvn/.asdf/installs/python/3.11.9/lib/libpython3.11.dylib"
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
@@ -255,21 +252,6 @@ export LDFLAGS="-L$(brew --prefix openssl@3)/lib"
 export CPPFLAGS="-I$(brew --prefix openssl@3)/include"
 export PATH="$PATH:/Users/mrkvn/.modular/bin"
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/mrkvn/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/mrkvn/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/mrkvn/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/mrkvn/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-export PATH="/Users/mrkvn/miniconda3/bin:$PATH"
 eval "$(uv generate-shell-completion zsh)"
 
 # bun completions
