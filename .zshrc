@@ -166,6 +166,12 @@ alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 gcm() {
     git commit -m "$@"
 }
+brd() {
+  bun run dev "$@"
+}
+alias brb="bun run build"
+alias c="claude"
+alias ccon="claude --continue"
 
 ___MY_VMOPTIONS_SHELL_FILE="${HOME}/.jetbrains.vmoptions.sh"; if [ -f "${___MY_VMOPTIONS_SHELL_FILE}" ]; then . "${___MY_VMOPTIONS_SHELL_FILE}"; fi
 
@@ -228,8 +234,8 @@ export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 
 
 #. /opt/homebrew/opt/asdf/libexec/asdf.sh
-ssh-add --apple-use-keychain ~/.ssh/id_ed25519 &> /dev/null
-
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_20260326 &> /dev/null
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_20260420_pub &> /dev/null
 # Wasmer
 export WASMER_DIR="/Users/mrkvn/.wasmer"
 [ -s "$WASMER_DIR/wasmer.sh" ] && source "$WASMER_DIR/wasmer.sh"
