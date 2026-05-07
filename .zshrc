@@ -281,3 +281,5 @@ export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
 
 # Added by Antigravity
 export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
+
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
