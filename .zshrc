@@ -170,8 +170,11 @@ brd() {
   bun run dev "$@"
 }
 alias brb="bun run build"
-alias c="claude"
-alias ccon="claude --continue"
+unalias c 2>/dev/null
+c() {
+  claude --model claude-opus-4-7 --effort xhigh "$@"
+}
+alias ccon="c --continue"
 
 ___MY_VMOPTIONS_SHELL_FILE="${HOME}/.jetbrains.vmoptions.sh"; if [ -f "${___MY_VMOPTIONS_SHELL_FILE}" ]; then . "${___MY_VMOPTIONS_SHELL_FILE}"; fi
 
