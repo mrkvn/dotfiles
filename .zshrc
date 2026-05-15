@@ -228,6 +228,7 @@ export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+[[ ! -f ~/.claude/themes/active/p10k-overlay.zsh ]] || source ~/.claude/themes/active/p10k-overlay.zsh
 
 export PATH="$HOME/go/bin:$PATH"
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
