@@ -86,6 +86,12 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
+# ── Accept zsh-autosuggestion with Ctrl+Space ──
+# Most terminals send Ctrl+Space as NUL (^@); some send ^ . Bind both so it
+# works regardless. Right arrow / Ctrl+E still accept too.
+bindkey '^ '  autosuggest-accept
+bindkey '^@'  autosuggest-accept
+
 # ── Catppuccin-themed fzf ──
 export FZF_DEFAULT_OPTS=" \
 --color=bg+:#313244,bg:#000000,spinner:#f5e0dc,hl:#f38ba8 \
@@ -172,9 +178,10 @@ brd() {
 alias brb="bun run build"
 unalias c 2>/dev/null
 c() {
-  claude --model claude-opus-4-7 --effort xhigh "$@"
+  claude --model opus --effort high "$@"
 }
 alias ccon="c --continue"
+alias ci="claude-init"
 
 ___MY_VMOPTIONS_SHELL_FILE="${HOME}/.jetbrains.vmoptions.sh"; if [ -f "${___MY_VMOPTIONS_SHELL_FILE}" ]; then . "${___MY_VMOPTIONS_SHELL_FILE}"; fi
 
@@ -287,3 +294,7 @@ export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
 export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
 
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/mrkvn/.local/bin:$PATH"

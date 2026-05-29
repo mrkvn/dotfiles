@@ -7,3 +7,4 @@ window-padding-y = 10,0
 # without going through the kitty keyboard protocol — needed because tmux's
 # extended-keys handling is disabled (it mangles paste; see ~/.tmux.conf).
 keybind = shift+enter=text:\n
+keybind = shift+kp_enter=text:\n
