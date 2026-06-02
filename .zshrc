@@ -191,9 +191,10 @@ c() {
 }
 unalias ccon 2>/dev/null
 ccon() {
-  # Resume the previous session as-is — do NOT strip effortLevel, so it keeps
-  # whatever effort the prior session was using (e.g. low).
-  command claude --continue --permission-mode auto --model opus "$@"
+  # Resume the previous session as-is. Pass NO --model and do NOT strip
+  # effortLevel, so it keeps whatever model + effort the prior session used
+  # (both persist in ~/.claude/settings.json and --continue falls back to them).
+  command claude --continue --permission-mode auto "$@"
 }
 unalias cs 2>/dev/null
 cs() {
