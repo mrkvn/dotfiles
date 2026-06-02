@@ -189,7 +189,11 @@ c() {
   fi
   command claude --permission-mode auto --model opus "$@"
 }
-alias ccon="c --continue"
+ccon() {
+  # Resume the previous session as-is — do NOT strip effortLevel, so it keeps
+  # whatever effort the prior session was using (e.g. low).
+  command claude --continue --permission-mode auto --model opus "$@"
+}
 unalias cs 2>/dev/null
 cs() {
   #claude --model sonnet --effort medium "$@"
