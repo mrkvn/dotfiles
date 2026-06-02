@@ -178,8 +178,16 @@ brd() {
 alias brb="bun run build"
 unalias c 2>/dev/null
 c() {
-  #claude --model opus --effort high "$@"
-  claude --dangerously-skip-permissions --model opus --effort high "$@"
+  # Launch Claude Code (Opus, auto mode) at the model's DEFAULT effort, still
+  # overridable in-session. Strips the persisted effortLevel from settings.json
+  # so the model default (e.g. high on Opus 4.8) applies; does NOT set
+  # CLAUDE_CODE_EFFORT_LEVEL, so /effort still works inside the session.
+  local f="$HOME/.claude/settings.json"
+  if [ -f "$f" ]; then
+    local tmp; tmp="$(mktemp)"
+    jq 'del(.effortLevel)' "$f" > "$tmp" && mv "$tmp" "$f"
+  fi
+  command claude --permission-mode auto --model opus "$@"
 }
 alias ccon="c --continue"
 unalias cs 2>/dev/null
@@ -305,16 +313,3 @@ export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
 
 # Added by Antigravity CLI installer
 export PATH="/Users/mrkvn/.local/bin:$PATH"
-
-# Launch Claude Code at the model's DEFAULT effort, still overridable in-session.
-# Strips the persisted effortLevel from settings.json before launch so the model
-# default (e.g. high on Opus 4.8) applies; does NOT set CLAUDE_CODE_EFFORT_LEVEL,
-# so /effort still works inside the session.
-cdef() {
-  local f="$HOME/.claude/settings.json"
-  if [ -f "$f" ]; then
-    local tmp; tmp="$(mktemp)"
-    jq 'del(.effortLevel)' "$f" > "$tmp" && mv "$tmp" "$f"
-  fi
-  command claude "$@"
-}
