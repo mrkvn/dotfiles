@@ -189,6 +189,7 @@ c() {
   fi
   command claude --permission-mode auto --model opus "$@"
 }
+unalias ccon 2>/dev/null
 ccon() {
   # Resume the previous session as-is — do NOT strip effortLevel, so it keeps
   # whatever effort the prior session was using (e.g. low).
