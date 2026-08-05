@@ -286,6 +286,52 @@ export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 [[ ! -f ~/.claude/themes/active/p10k-overlay.zsh ]] || source ~/.claude/themes/active/p10k-overlay.zsh
 
+# --- xmux pane theme (see xmux README, "Pane theme") -------------------------
+# Inside an xmux pane the terminal background is xmux's own palette, not
+# Ghostty's, so the prompt must follow $XMUX_THEME instead of the global
+# themes/active symlink sourced just above. Reuses the existing preset overlays,
+# so /mod-theme stays the single source of truth for the colour values.
+# Inert outside xmux: $XMUX_THEME is set only in an xmux pane, so a normal
+# Ghostty shell keeps the global overlay above untouched.
+# Remove this whole block to revert.
+if [[ -n $XMUX_THEME ]]; then
+  _xmux_sync_prompt() {
+    # tmux is authoritative AND live; $XMUX_THEME is only correct as of pane
+    # creation, since a running shell's environment can't be updated from
+    # outside. Fall back to the env var when the query yields nothing.
+    local t=$(tmux show-environment -g XMUX_THEME 2>/dev/null | sed -n 's/^XMUX_THEME=//p')
+    [[ -z $t ]] && t=$XMUX_THEME
+    # Re-apply when the theme changed OR when something else overwrote the value
+    # we set: /mod-theme pushes the GLOBAL overlay into every idle zsh pane,
+    # xmux panes included, which would otherwise stick until the next toggle.
+    [[ $t == ${_xmux_prompt_applied-} && $POWERLEVEL9K_BACKGROUND == ${_xmux_bg_applied-} ]] && return
+    local overlay=$HOME/.claude/themes/presets/$t/p10k-overlay.zsh
+    [[ -f $overlay ]] || return
+    source $overlay || return
+    _xmux_prompt_applied=$t
+    _xmux_bg_applied=$POWERLEVEL9K_BACKGROUND
+    (( $+functions[p10k] )) && p10k reload
+  }
+  autoload -Uz add-zsh-hook && add-zsh-hook precmd _xmux_sync_prompt
+  # Apply once NOW, at source time. The precmd hook alone is not enough: p10k
+  # reload takes effect from the NEXT prompt, so a pane that is spawned and then
+  # simply left alone would render its first (and only) prompt with the global
+  # overlay's colour and never correct itself.
+  _xmux_sync_prompt
+  # xmux nudges this pane when the theme changes, by sending the private
+  # sequence bound below. The widget stashes whatever is on the line
+  # (push-line), submits an EMPTY line so a real prompt cycle runs -- the only
+  # thing that makes p10k re-read its colours -- and zsh restores the stashed
+  # text at the new prompt. Anything half-typed survives and is NEVER executed.
+  _xmux_theme_widget() { zle push-line; zle accept-line }
+  zle -N _xmux_theme_widget
+  bindkey '\e[99;99~' _xmux_theme_widget
+  # Advertise the binding, so xmux only sends the sequence to a pane that
+  # understands it. A pane without this snippet is never sent anything.
+  [[ -n $TMUX_PANE ]] && tmux set-option -t "$TMUX_PANE" -p @xmux_prompt_hook 1 2>/dev/null
+fi
+# --- end xmux pane theme -----------------------------------------------------
+
 export PATH="$HOME/go/bin:$PATH"
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 
