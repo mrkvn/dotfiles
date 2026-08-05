@@ -188,6 +188,7 @@ c() {
     jq 'del(.effortLevel)' "$f" > "$tmp" && mv "$tmp" "$f"
   fi
   command claude --permission-mode auto --model opus "$@"
+  #command claude --dangerously-skip-permissions --model opus "$@"
 }
 unalias ccon 2>/dev/null
 ccon() {
@@ -195,6 +196,30 @@ ccon() {
   # effortLevel, so it keeps whatever model + effort the prior session used
   # (both persist in ~/.claude/settings.json and --continue falls back to them).
   command claude --continue --permission-mode auto "$@"
+}
+unalias cm 2>/dev/null
+cm() {
+  # Like c() but launches Opus at MEDIUM effort. Sets --effort medium explicitly
+  # (rather than stripping effortLevel like c does), still overridable via
+  # /effort inside the session.
+  command claude --permission-mode auto --model opus --effort medium "$@"
+}
+unalias cmcon 2>/dev/null
+cmcon() {
+  # Continue version of cm(): resume the previous session on Opus at MEDIUM effort.
+  command claude --continue --permission-mode auto --model opus --effort medium "$@"
+}
+unalias cx 2>/dev/null
+cx() {
+  # Like c() but launches Fable at LOW effort. Sets --effort low explicitly
+  # (rather than stripping effortLevel like c does), still overridable via
+  # /effort inside the session.
+  command claude --permission-mode auto --model fable --effort low "$@"
+}
+unalias cxcon 2>/dev/null
+cxcon() {
+  # Fable version of ccon(): resume the previous session on Fable at LOW effort.
+  command claude --continue --permission-mode auto --model fable --effort low "$@"
 }
 unalias cs 2>/dev/null
 cs() {
@@ -319,3 +344,7 @@ export PATH="/Users/mrkvn/.antigravity/antigravity/bin:$PATH"
 
 # Added by Antigravity CLI installer
 export PATH="/Users/mrkvn/.local/bin:$PATH"
+
+# Command-Tab app switcher: show on all monitors (ct0) or main monitor only (ct1)
+alias ct0='defaults write com.apple.dock appswitcher-all-displays -bool true; killall Dock'
+alias ct1='defaults delete com.apple.dock appswitcher-all-displays; killall Dock'
