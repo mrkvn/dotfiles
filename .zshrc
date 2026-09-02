@@ -211,15 +211,36 @@ cmcon() {
 }
 unalias cx 2>/dev/null
 cx() {
-  # Like c() but launches Fable at LOW effort. Sets --effort low explicitly
-  # (rather than stripping effortLevel like c does), still overridable via
-  # /effort inside the session.
-  command claude --permission-mode auto --model fable --effort low "$@"
+  # Launch Codex on the latest Sol model at HIGH reasoning effort.
+  # ~/.codex/config.toml pins model_reasoning_effort = "low"; the -c override
+  # below wins for this run only -- the file is never edited, and /model still
+  # changes model + effort inside the session.
+  #
+  # Under ~/code (any depth), also force the Auto preset explicitly, so a folder
+  # that has not been trusted yet does not silently start read-only. Codex trust
+  # is exact-path only and is NOT inherited from a parent directory.
+  local model
+  model="$(command codex debug models 2>/dev/null \
+    | jq -r 'first(.models[] | select(.visibility == "list" and (.slug | test("sol"))) | .slug)' 2>/dev/null)"
+  [ -n "$model" ] && [ "$model" != "null" ] || model="gpt-5.6-sol"
+
+  local -a args
+  args=(-m "$model" -c 'model_reasoning_effort="high"')
+  case "$PWD/" in
+    "$HOME"/code/*) args+=(-s workspace-write -a never) ;;
+  esac
+
+  command codex "${args[@]}" "$@"
 }
-unalias cxcon 2>/dev/null
-cxcon() {
-  # Fable version of ccon(): resume the previous session on Fable at LOW effort.
-  command claude --continue --permission-mode auto --model fable --effort low "$@"
+unalias cxl 2>/dev/null
+cxl() {
+  # Launch Codex on GPT-5.6 Luna at MAX reasoning effort.
+  local -a args
+  args=(-m gpt-5.6-luna -c 'model_reasoning_effort="max"')
+  case "$PWD/" in
+    "$HOME"/code/*) args+=(-s workspace-write -a never) ;;
+  esac
+  command codex "${args[@]}" "$@"
 }
 unalias cs 2>/dev/null
 cs() {
