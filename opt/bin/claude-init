@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# claude-init — drop the claude_init bootstrap content into a directory
+# without overwriting any existing files.
+#
+# Behavior: clones mrkvn/claude_init AND TheTokenMaxxers/skills to temp dirs,
+# then merges their contents into the target directory using rsync
+# --ignore-existing. Files that already exist are kept as-is; missing files are
+# filled in from the bootstrap. Shared skills are written first, so during the
+# migration window (while both repos still carry them) the thetokenmaxxers copy
+# wins. Neither repo's .git/ is copied — the target stays its own repo (or
+# remains non-git if it wasn't one). claude_init's own session artifacts
+# (.claude/brainstorm, learned, findings, archives, notes.md, backlogs.md) are
+# skipped — they're that project's history, not scaffolding.
+#
+# Finally it wires the project for Codex CLI, which never reads .claude/:
+# AGENTS.md -> .claude/CLAUDE.md and .agents/skills/<n> -> .claude/skills/<n>,
+# all symlinks, so both agents read one source of truth. Skip with --no-codex.
+#
+# If TheTokenMaxxers/skills can't be cloned, the script warns and continues
+# with claude_init alone rather than failing.
+#
+# Usage:
+#   claude-init            # operate on the current directory
+#   claude-init <path>     # operate on the given directory
+#   claude-init --no-codex # skip the Codex symlinks
+#   claude-init --help     # show this message
+#
+# Requires: git, rsync, and SSH access via the github.com-mrkvn host alias.
+# Optional: gh, used as a fallback when the SSH alias can't reach the shared repo.
+
+set -euo pipefail
+
+REPO_URL="git@github.com-mrkvn:mrkvn/claude_init.git"
+SHARED_REPO="TheTokenMaxxers/skills"
+SHARED_URL="git@github.com-mrkvn:${SHARED_REPO}.git"
+
+WIRE_CODEX=1
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    --no-codex) WIRE_CODEX=0 ;;
+    *) ARGS+=("$1") ;;
+  esac
+  shift
+done
+
+TARGET_DIR="${ARGS[0]:-$PWD}"
+
+if [ ! -d "$TARGET_DIR" ]; then
+  echo "claude-init: target '$TARGET_DIR' is not a directory" >&2
+  exit 1
+fi
+
+TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
+
+for bin in git rsync; do
+  if ! command -v "$bin" >/dev/null 2>&1; then
+    echo "claude-init: required command '$bin' not found in PATH" >&2
+    exit 1
+  fi
+done
+
+TMP_ROOT="$(mktemp -d -t claude-init.XXXXXX)"
+trap 'rm -rf "$TMP_ROOT"' EXIT
+
+MAIN_DIR="$TMP_ROOT/main"
+SHARED_DIR="$TMP_ROOT/shared"
+
+echo "claude-init: cloning bootstrap..."
+git clone --quiet --depth 1 "$REPO_URL" "$MAIN_DIR" >/dev/null
+
+# Shared skills are best-effort: a scaffold that fails because a secondary repo
+# was unreachable is worse than one that scaffolds what it can and says why.
+echo "claude-init: cloning shared skills..."
+SHARED_OK=0
+if git clone --quiet --depth 1 "$SHARED_URL" "$SHARED_DIR" >/dev/null 2>&1; then
+  SHARED_OK=1
+elif command -v gh >/dev/null 2>&1 && gh repo clone "$SHARED_REPO" "$SHARED_DIR" -- --depth 1 --quiet >/dev/null 2>&1; then
+  SHARED_OK=1
+else
+  echo "claude-init: warning — could not clone $SHARED_REPO, continuing without it" >&2
+fi
+
+echo "claude-init: merging into $TARGET_DIR (existing files preserved)..."
+
+# Shared skills first: with --ignore-existing the first writer wins, so this
+# keeps the thetokenmaxxers copy of any skill that still exists in both repos.
+if [ "$SHARED_OK" -eq 1 ] && [ -d "$SHARED_DIR/skills" ]; then
+  mkdir -p "$TARGET_DIR/.claude/skills"
+  rsync -a --ignore-existing "$SHARED_DIR/skills/" "$TARGET_DIR/.claude/skills/"
+fi
+
+# Session artifacts belong to the claude_init project itself, not to whatever
+# we're scaffolding. They live under .claude/ next to the real bootstrap
+# content, so they'd otherwise ride along and pollute every new project with
+# unrelated history. Skills recreate these dirs on demand.
+rsync -a --ignore-existing \
+  --exclude='.git/' \
+  --exclude='README.md' \
+  --exclude='/.claude/brainstorm/' \
+  --exclude='/.claude/learned/' \
+  --exclude='/.claude/findings/' \
+  --exclude='/.claude/archives/' \
+  --exclude='/.claude/notes.md' \
+  --exclude='/.claude/backlogs.md' \
+  "$MAIN_DIR/" "$TARGET_DIR/"
+
+# The bootstrap .gitignore ignores docs/, but project docs are meant to be
+# tracked. Drop that entry (and its orphaned comment) from the target.
+GITIGNORE="$TARGET_DIR/.gitignore"
+if [ -f "$GITIGNORE" ] && grep -qE '^/?docs/?$' "$GITIGNORE"; then
+  LC_ALL=C perl -0pi -e 's/^(?:[ \t]*#[^\n]*\n)?[ \t]*\/?docs\/?[ \t]*\n//mg' "$GITIGNORE"
+  echo "claude-init: removed docs/ from .gitignore"
+fi
+
+# Codex CLI reads AGENTS.md and .agents/skills — never .claude/. Symlink rather
+# than copy so a later /upskill run updates both agents at once. Real files are
+# left alone: a project that already has its own AGENTS.md keeps it.
+if [ "$WIRE_CODEX" -eq 1 ]; then
+  echo "claude-init: wiring Codex (AGENTS.md, .agents/skills)..."
+
+  if [ -f "$TARGET_DIR/.claude/CLAUDE.md" ] && [ ! -e "$TARGET_DIR/AGENTS.md" ] && [ ! -L "$TARGET_DIR/AGENTS.md" ]; then
+    ln -s ".claude/CLAUDE.md" "$TARGET_DIR/AGENTS.md"
+    echo "claude-init:   AGENTS.md -> .claude/CLAUDE.md"
+  fi
+
+  if [ -d "$TARGET_DIR/.claude/skills" ]; then
+    mkdir -p "$TARGET_DIR/.agents/skills"
+    linked=0
+    for src in "$TARGET_DIR"/.claude/skills/*/; do
+      [ -d "$src" ] || continue
+      name="$(basename "$src")"
+      dest="$TARGET_DIR/.agents/skills/$name"
+      if [ -e "$dest" ] || [ -L "$dest" ]; then continue; fi
+      ln -s "../../.claude/skills/$name" "$dest"
+      linked=$((linked+1))
+    done
+    # drop links to skills that no longer exist upstream
+    for l in "$TARGET_DIR"/.agents/skills/*; do
+      if [ -L "$l" ] && [ ! -e "$l" ]; then rm -f "$l"; fi
+    done
+    echo "claude-init:   $linked skill(s) linked into .agents/skills"
+  fi
+fi
+
+echo "claude-init: done."
