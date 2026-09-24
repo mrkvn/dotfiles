@@ -227,7 +227,16 @@ cx() {
   local -a args
   args=(-m "$model" -c 'model_reasoning_effort="high"')
   case "$PWD/" in
-    "$HOME"/code/*) args+=(-s workspace-write -a never) ;;
+    "$HOME"/code/*)
+      # Keep the sandbox but let Codex fetch/commit: open network and make the
+      # git dir, .agents and .codex writable -- the only dirs workspace-write keeps
+      # read-only inside a project (verified against codex-cli 0.156.1).
+      args+=(-s workspace-write -a never -c 'sandbox_workspace_write.network_access=true')
+      local roots="\"$PWD/.agents\",\"$PWD/.codex\"" gitdir
+      gitdir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" \
+        && roots="$roots,\"$gitdir\""
+      args+=(-c "sandbox_workspace_write.writable_roots=[$roots]")
+      ;;
   esac
 
   command codex "${args[@]}" "$@"
@@ -238,7 +247,16 @@ cxl() {
   local -a args
   args=(-m gpt-5.6-luna -c 'model_reasoning_effort="max"')
   case "$PWD/" in
-    "$HOME"/code/*) args+=(-s workspace-write -a never) ;;
+    "$HOME"/code/*)
+      # Keep the sandbox but let Codex fetch/commit: open network and make the
+      # git dir, .agents and .codex writable -- the only dirs workspace-write keeps
+      # read-only inside a project (verified against codex-cli 0.156.1).
+      args+=(-s workspace-write -a never -c 'sandbox_workspace_write.network_access=true')
+      local roots="\"$PWD/.agents\",\"$PWD/.codex\"" gitdir
+      gitdir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" \
+        && roots="$roots,\"$gitdir\""
+      args+=(-c "sandbox_workspace_write.writable_roots=[$roots]")
+      ;;
   esac
   command codex "${args[@]}" "$@"
 }
