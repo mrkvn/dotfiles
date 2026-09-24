@@ -433,3 +433,13 @@ export PATH="/Users/mrkvn/.local/bin:$PATH"
 # Command-Tab app switcher: show on all monitors (ct0) or main monitor only (ct1)
 alias ct0='defaults write com.apple.dock appswitcher-all-displays -bool true; killall Dock'
 alias ct1='defaults delete com.apple.dock appswitcher-all-displays; killall Dock'
+
+# macOS 27 dropped Rosetta, so every x86 binary in the Intel Homebrew prefix
+# (/usr/local) is dead. Keep that dir on PATH — docker, kubectl, ollama,
+# tailscale and whisper live there and are ARM/scripts — but put it last, and
+# slot GNU coreutils' unprefixed names (sha256sum, md5sum, base32…) ahead of it
+# so a dead x86 copy never shadows a working one. Unprefixed GNU names stay
+# behind /bin and /usr/bin, so ls/date keep their BSD behaviour.
+typeset -U path
+path=(${path:#/usr/local/bin} /opt/homebrew/opt/coreutils/libexec/gnubin /usr/local/bin)
+export PATH
