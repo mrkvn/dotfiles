@@ -434,6 +434,39 @@ export PATH="/Users/mrkvn/.local/bin:$PATH"
 alias ct0='defaults write com.apple.dock appswitcher-all-displays -bool true; killall Dock'
 alias ct1='defaults delete com.apple.dock appswitcher-all-displays; killall Dock'
 
+# Muse Code: cross-session messaging gates on, contributor model at max effort, YOLO (no approvals, no sandbox).
+# A function, not an alias: `exec` only accepts --model/--reasoning-effort after the subcommand.
+m() {
+  local -a gates=(MUSE_EXPERIMENTAL_EXTERNAL_AGENT_INGRESS=on MUSE_EXPERIMENTAL_LOCAL_SESSION_MESSAGING=1)
+  local -a model=(--model muse-spark-1.3-contributor --reasoning-effort max --yolo --approval-mode never)
+  case "$1" in
+    exec)   shift; env "${gates[@]}" muse exec "${model[@]}" "$@" ;;
+    resume|-*|"") env "${gates[@]}" muse "${model[@]}" "$@" ;;
+    export|trace|skills|plugins|sandbox|schema|serve|session-message|mcp|auth|login|logout|init|config)
+            env "${gates[@]}" muse "$@" ;;
+    *)      env "${gates[@]}" muse "${model[@]}" "$@" ;;
+  esac
+}
+
+# mc — Claude Code harness on Meta Muse Spark via local CLIProxyAPI (brew services start cliproxyapi)
+mc() {
+  local m=muse-spark-1.3-contributor
+  ANTHROPIC_BASE_URL=http://127.0.0.1:8317 \
+  ANTHROPIC_AUTH_TOKEN="$(cat ~/.config/cliproxyapi/client-key)" \
+  CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000 \
+  ANTHROPIC_DEFAULT_OPUS_MODEL=$m \
+  ANTHROPIC_DEFAULT_SONNET_MODEL=$m \
+  ANTHROPIC_DEFAULT_HAIKU_MODEL=$m \
+  CLAUDE_CODE_SUBAGENT_MODEL=$m \
+  CLAUDE_BYTE_STREAM_IDLE_TIMEOUT_MS=600000 \
+  CLAUDE_STREAM_IDLE_TIMEOUT_MS=600000 \
+  CLAUDE_STREAM_FIRST_BYTE_TIMEOUT_MS=600000 \
+  API_TIMEOUT_MS=1800000 \
+  SECURITY_REVIEW_MODEL=$m \
+  SG_AGENTIC_MODEL=$m \
+  command claude --model $m --effort max "$@"
+}
+
 # macOS 27 dropped Rosetta, so every x86 binary in the Intel Homebrew prefix
 # (/usr/local) is dead. Keep that dir on PATH — docker, kubectl, ollama,
 # tailscale and whisper live there and are ARM/scripts — but put it last, and
