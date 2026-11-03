@@ -117,6 +117,17 @@ if [ -f "$GITIGNORE" ] && grep -qE '^/?docs/?$' "$GITIGNORE"; then
   echo "claude-init: removed docs/ from .gitignore"
 fi
 
+# Wrangler's local state (dev databases, bundles, account cache) is regenerated
+# and never belongs in git. Appended rather than left to the bootstrap because
+# --ignore-existing keeps a project's own .gitignore untouched.
+if ! { [ -f "$GITIGNORE" ] && grep -qE '^/?\.wrangler/?[[:space:]]*$' "$GITIGNORE"; }; then
+  if [ -s "$GITIGNORE" ] && [ -n "$(tail -c 1 "$GITIGNORE")" ]; then
+    echo >> "$GITIGNORE"
+  fi
+  echo ".wrangler/" >> "$GITIGNORE"
+  echo "claude-init: added .wrangler/ to .gitignore"
+fi
+
 # Codex CLI reads AGENTS.md and .agents/skills — never .claude/. Symlink rather
 # than copy so a later /upskill run updates both agents at once. Real files are
 # left alone: a project that already has its own AGENTS.md keeps it.
