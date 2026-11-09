@@ -1,3 +1,11 @@
+# ASCII BOAT SHELL INTEGRATION START boat
+case ":$PATH:" in
+  *":/Users/mrkvn/.ascii/bin:"*) ;;
+  *) PATH="/Users/mrkvn/.ascii/bin:$PATH" ;;
+esac
+export PATH
+# ASCII BOAT SHELL INTEGRATION END boat
+
 #l;i Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -307,7 +315,6 @@ esac
 export MODULAR_HOME="/Users/mrkvn/.modular"
 #export PATH="/Users/mrkvn/.modular/pkg/packages.modular.com_mojo/bin:$PATH"
 export PATH="$HOME/.local/scripts:$PATH"
-export PATH="$PATH:/Users/mrkvn/.opt/flutter/bin"
 
 
 #export MOJO_PYTHON_LIBRARY="/Users/mrkvn/.asdf/installs/python/3.11.9/lib/libpython3.11.dylib"
@@ -325,51 +332,51 @@ export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 [[ ! -f ~/.claude/themes/active/p10k-overlay.zsh ]] || source ~/.claude/themes/active/p10k-overlay.zsh
 
-# --- xmux pane theme (see xmux README, "Pane theme") -------------------------
-# Inside an xmux pane the terminal background is xmux's own palette, not
-# Ghostty's, so the prompt must follow $XMUX_THEME instead of the global
+# --- The Workspace pane theme (see The Workspace README, "Pane theme") -------------------------
+# Inside a pane of The Workspace the terminal background is the app's own palette, not
+# Ghostty's, so the prompt must follow $THEWORKSPACE_THEME instead of the global
 # themes/active symlink sourced just above. Reuses the existing preset overlays,
 # so /mod-theme stays the single source of truth for the colour values.
-# Inert outside xmux: $XMUX_THEME is set only in an xmux pane, so a normal
+# Inert outside The Workspace: $THEWORKSPACE_THEME is set only in its panes, so a normal
 # Ghostty shell keeps the global overlay above untouched.
 # Remove this whole block to revert.
-if [[ -n $XMUX_THEME ]]; then
-  _xmux_sync_prompt() {
-    # tmux is authoritative AND live; $XMUX_THEME is only correct as of pane
+if [[ -n $THEWORKSPACE_THEME ]]; then
+  _the_workspace_sync_prompt() {
+    # tmux is authoritative AND live; $THEWORKSPACE_THEME is only correct as of pane
     # creation, since a running shell's environment can't be updated from
     # outside. Fall back to the env var when the query yields nothing.
-    local t=$(tmux show-environment -g XMUX_THEME 2>/dev/null | sed -n 's/^XMUX_THEME=//p')
-    [[ -z $t ]] && t=$XMUX_THEME
+    local t=$(tmux show-environment -g THEWORKSPACE_THEME 2>/dev/null | sed -n 's/^THEWORKSPACE_THEME=//p')
+    [[ -z $t ]] && t=$THEWORKSPACE_THEME
     # Re-apply when the theme changed OR when something else overwrote the value
     # we set: /mod-theme pushes the GLOBAL overlay into every idle zsh pane,
-    # xmux panes included, which would otherwise stick until the next toggle.
-    [[ $t == ${_xmux_prompt_applied-} && $POWERLEVEL9K_BACKGROUND == ${_xmux_bg_applied-} ]] && return
+    # The Workspace panes included, which would otherwise stick until the next toggle.
+    [[ $t == ${_the_workspace_prompt_applied-} && $POWERLEVEL9K_BACKGROUND == ${_the_workspace_bg_applied-} ]] && return
     local overlay=$HOME/.claude/themes/presets/$t/p10k-overlay.zsh
     [[ -f $overlay ]] || return
     source $overlay || return
-    _xmux_prompt_applied=$t
-    _xmux_bg_applied=$POWERLEVEL9K_BACKGROUND
+    _the_workspace_prompt_applied=$t
+    _the_workspace_bg_applied=$POWERLEVEL9K_BACKGROUND
     (( $+functions[p10k] )) && p10k reload
   }
-  autoload -Uz add-zsh-hook && add-zsh-hook precmd _xmux_sync_prompt
+  autoload -Uz add-zsh-hook && add-zsh-hook precmd _the_workspace_sync_prompt
   # Apply once NOW, at source time. The precmd hook alone is not enough: p10k
   # reload takes effect from the NEXT prompt, so a pane that is spawned and then
   # simply left alone would render its first (and only) prompt with the global
   # overlay's colour and never correct itself.
-  _xmux_sync_prompt
-  # xmux nudges this pane when the theme changes, by sending the private
+  _the_workspace_sync_prompt
+  # The Workspace nudges this pane when the theme changes, by sending the private
   # sequence bound below. The widget stashes whatever is on the line
   # (push-line), submits an EMPTY line so a real prompt cycle runs -- the only
   # thing that makes p10k re-read its colours -- and zsh restores the stashed
   # text at the new prompt. Anything half-typed survives and is NEVER executed.
-  _xmux_theme_widget() { zle push-line; zle accept-line }
-  zle -N _xmux_theme_widget
-  bindkey '\e[99;99~' _xmux_theme_widget
-  # Advertise the binding, so xmux only sends the sequence to a pane that
+  _the_workspace_theme_widget() { zle push-line; zle accept-line }
+  zle -N _the_workspace_theme_widget
+  bindkey '\e[99;99~' _the_workspace_theme_widget
+  # Advertise the binding, so the app only sends the sequence to a pane that
   # understands it. A pane without this snippet is never sent anything.
-  [[ -n $TMUX_PANE ]] && tmux set-option -t "$TMUX_PANE" -p @xmux_prompt_hook 1 2>/dev/null
+  [[ -n $TMUX_PANE ]] && tmux set-option -t "$TMUX_PANE" -p @the_workspace_prompt_hook 1 2>/dev/null
 fi
-# --- end xmux pane theme -----------------------------------------------------
+# --- end The Workspace pane theme -----------------------------------------------------
 
 export PATH="$HOME/go/bin:$PATH"
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
@@ -434,11 +441,11 @@ export PATH="/Users/mrkvn/.local/bin:$PATH"
 alias ct0='defaults write com.apple.dock appswitcher-all-displays -bool true; killall Dock'
 alias ct1='defaults delete com.apple.dock appswitcher-all-displays; killall Dock'
 
-# Muse Code: cross-session messaging gates on, contributor model at max effort, YOLO (no approvals, no sandbox).
+# Muse Code: cross-session messaging gates on, Muse Spark 1.3 (contributor mode is the default) at max effort, YOLO (no approvals, no sandbox).
 # A function, not an alias: `exec` only accepts --model/--reasoning-effort after the subcommand.
 m() {
   local -a gates=(MUSE_EXPERIMENTAL_EXTERNAL_AGENT_INGRESS=on MUSE_EXPERIMENTAL_LOCAL_SESSION_MESSAGING=1)
-  local -a model=(--model muse-spark-1.3-contributor --reasoning-effort max --yolo --approval-mode never)
+  local -a model=(--model muse-spark-1.3 --reasoning-effort max --yolo --approval-mode never)
   case "$1" in
     exec)   shift; env "${gates[@]}" muse exec "${model[@]}" "$@" ;;
     resume|-*|"") env "${gates[@]}" muse "${model[@]}" "$@" ;;
@@ -450,7 +457,7 @@ m() {
 
 # mc — Claude Code harness on Meta Muse Spark via local CLIProxyAPI (brew services start cliproxyapi)
 mc() {
-  local m=muse-spark-1.3-contributor
+  local m=muse-spark-1.3
   ANTHROPIC_BASE_URL=http://127.0.0.1:8317 \
   ANTHROPIC_AUTH_TOKEN="$(cat ~/.config/cliproxyapi/client-key)" \
   CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000 \
@@ -476,3 +483,38 @@ mc() {
 typeset -U path
 path=(${path:#/usr/local/bin} /opt/homebrew/opt/coreutils/libexec/gnubin /usr/local/bin)
 export PATH
+
+# ASCII BOAT SHELL INTEGRATION START boat
+boat() {
+  current_file=$(mktemp)
+  convo_file=$(mktemp)
+  old_current_file=${BOAT_CURRENT_ID_FILE-}
+  old_convo_file=${BOAT_CURRENT_CONVO_FILE-}
+  export BOAT_CURRENT_ID_FILE="$current_file"
+  export BOAT_CURRENT_CONVO_FILE="$convo_file"
+  command "/Users/mrkvn/.ascii/bin/boat" "$@"
+  boat_status=$?
+  if [ "$boat_status" -eq 0 ]; then
+    case "${1:-}" in
+      new|start|fork)
+        if [ -s "$current_file" ]; then
+          current_id=$(tr -d '[:space:]' < "$current_file")
+          if [ -n "$current_id" ]; then export BOAT_CURRENT_ID="$current_id"; fi
+        fi
+        ;;
+    esac
+    case "${1:-}" in
+      prompt)
+        if [ -s "$convo_file" ]; then
+          IFS= read -r current_convo < "$convo_file" || current_convo=""
+          if [ -n "$current_convo" ]; then export BOAT_CURRENT_CONVO="$current_convo"; fi
+        fi
+        ;;
+    esac
+  fi
+  if [ -n "$old_current_file" ]; then export BOAT_CURRENT_ID_FILE="$old_current_file"; else unset BOAT_CURRENT_ID_FILE; fi
+  if [ -n "$old_convo_file" ]; then export BOAT_CURRENT_CONVO_FILE="$old_convo_file"; else unset BOAT_CURRENT_CONVO_FILE; fi
+  rm -f "$current_file" "$convo_file"
+  return "$boat_status"
+}
+# ASCII BOAT SHELL INTEGRATION END boat
